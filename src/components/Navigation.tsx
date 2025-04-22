@@ -1,12 +1,56 @@
 
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { createClient } from "@supabase/supabase-js";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+
+const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 export function Navigation() {
   const location = useLocation();
-  
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("ออกจากระบบสำเร็จ");
+      navigate("/auth");
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  if (!user) {
+    return (
+      <nav className="flex justify-center mb-6 border-b">
+        <div className="flex items-center space-x-4">
+          <Button onClick={() => navigate("/auth")}>เข้าสู่ระบบ</Button>
+        </div>
+      </nav>
+    );
+  }
+
   return (
-    <nav className="flex justify-center mb-6 border-b">
+    <nav className="flex justify-between items-center mb-6 border-b px-4">
       <div className="flex space-x-8">
         <Link
           to="/"
@@ -29,6 +73,9 @@ export function Navigation() {
           สถิติอารมณ์
         </Link>
       </div>
+      <Button variant="outline" onClick={handleLogout}>
+        ออกจากระบบ
+      </Button>
     </nav>
   );
 }
