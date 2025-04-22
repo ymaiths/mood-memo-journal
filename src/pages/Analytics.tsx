@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getAllEntries } from "@/utils/storageUtils";
 import { Card } from "@/components/ui/card";
@@ -114,16 +114,19 @@ export default function Analytics() {
 
       <Card className="p-6">
         <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={chartData}>
+          <LineChart data={chartData}>
             <XAxis dataKey="date" />
             <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
             <Tooltip content={<CustomTooltip />} />
-            <Bar
+            <Line
+              type="monotone"
               dataKey="value"
-              fill="#9b87f5"
-              radius={[4, 4, 0, 0]}
+              stroke="#9b87f5"
+              strokeWidth={2}
+              dot={{ fill: "#9b87f5", r: 4 }}
+              activeDot={{ r: 6, fill: "#7E69AB" }}
             />
-          </BarChart>
+          </LineChart>
         </ResponsiveContainer>
       </Card>
     </div>
