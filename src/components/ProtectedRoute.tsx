@@ -13,15 +13,20 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setLoading(false);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+      } catch (error) {
+        console.warn("Error checking authentication status:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     getUser();
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="flex justify-center items-center h-64">กำลังโหลด...</div>;
   }
 
   if (!user) {
