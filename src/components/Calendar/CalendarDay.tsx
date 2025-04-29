@@ -7,7 +7,7 @@ interface CalendarDayProps {
   date: Date;
   currentMonth: Date;
   isSelected: boolean;
-  entry?: DiaryEntry;
+  entries: DiaryEntry[];
   onClick: () => void;
 }
 
@@ -15,7 +15,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   date,
   currentMonth,
   isSelected,
-  entry,
+  entries,
   onClick,
 }) => {
   const day = date.getDate();
@@ -49,7 +49,12 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
     return colors[mood];
   };
   
-  const dotColor = entry?.mood ? getMoodColor(entry.mood) : '';
+  // Show indicator if there are entries
+  const hasEntries = entries && entries.length > 0;
+  
+  // Get the most recent entry's mood for the dot color
+  const latestEntry = hasEntries ? entries[entries.length - 1] : null;
+  const dotColor = latestEntry ? getMoodColor(latestEntry.mood) : '';
   
   return (
     <button
@@ -58,22 +63,37 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
         calendar-day rounded-md flex items-center justify-center
         ${isCurrentMonth ? 'text-foreground' : 'text-muted-foreground opacity-40'}
         ${isSelected ? 'bg-mood-primary/10 ring-2 ring-mood-primary' : 'hover:bg-secondary'}
-        ${entry ? 'calendar-day-has-entry' : ''}
+        ${hasEntries ? 'calendar-day-has-entry' : ''}
       `}
     >
       <div 
         className={`
-          flex items-center justify-center w-9 h-9 rounded-full
-          ${entry ? `${getMoodColor(entry.mood)} bg-opacity-20 border ${getMoodBorderColor(entry.mood)}` : ''}
+          flex flex-col items-center justify-center w-full h-9 relative
+          ${hasEntries ? `${getMoodColor(latestEntry?.mood)} bg-opacity-20 border ${getMoodBorderColor(latestEntry?.mood)}` : ''}
         `}
       >
-        {day}
+        <span>{day}</span>
+        {hasEntries && (
+          <div className="absolute -bottom-1">
+            <div className="flex space-x-1 mt-1">
+              {entries.length <= 3 ? (
+                entries.map((entry, i) => (
+                  <div 
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full ${getMoodColor(entry.mood)}`}
+                  />
+                ))
+              ) : (
+                <>
+                  <div className={`w-1.5 h-1.5 rounded-full ${getMoodColor(entries[0].mood)}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full ${getMoodColor(entries[1].mood)}`} />
+                  <div className="text-xs leading-none">+{entries.length - 2}</div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
-      {entry && (
-        <div 
-          className={`calendar-day-has-entry::after ${dotColor}`}
-        ></div>
-      )}
     </button>
   );
 };

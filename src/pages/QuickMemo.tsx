@@ -2,14 +2,14 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import MoodSelector from '@/components/Diary/MoodSelector'; // Fixed: import as default export
+import MoodSelector from '@/components/Diary/MoodSelector';
 import { saveEntry } from '@/utils/storageUtils';
 import { toast } from 'sonner';
 import { MoodType } from '@/types';
 
 const QuickMemo = () => {
   const [content, setContent] = useState('');
-  const [mood, setMood] = useState<MoodType>(MoodType.NEUTRAL); // Use MoodType enum instead of number
+  const [mood, setMood] = useState<MoodType>(MoodType.NEUTRAL);
   
   const handleMoodChange = (newMood: MoodType) => {
     setMood(newMood);
@@ -25,14 +25,17 @@ const QuickMemo = () => {
       return;
     }
     
-    const today = new Date();
-    const dateString = today.toISOString().split('T')[0];
+    const now = new Date();
+    const dateString = now.toISOString().split('T')[0];
+    const timeString = now.toTimeString().split(' ')[0].substring(0, 5); // Get HH:MM format
     
     const entry = {
+      id: '', // Will be generated in saveEntry
       date: dateString,
+      time: timeString,
       mood: mood,
       text: content,
-      updatedAt: today.toISOString(),
+      updatedAt: now.toISOString(),
     };
     
     saveEntry(entry);

@@ -22,9 +22,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const daysOfWeek = getDaysOfWeek();
   const daysInMonth = getMonthDates(currentYear, currentMonth);
   
-  const getEntryForDate = (date: Date): DiaryEntry | undefined => {
+  const getEntriesForDate = (date: Date): DiaryEntry[] => {
     const dateString = formatDate(date);
-    return entries.find(entry => entry.date === dateString);
+    return entries.filter(entry => entry.date === dateString);
   };
 
   return (
@@ -50,7 +50,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               date.getMonth() === selectedDate.getMonth() &&
               date.getFullYear() === selectedDate.getFullYear()
             }
-            entry={getEntryForDate(date)}
+            entries={getEntriesForDate(date)}
             onClick={() => onSelectDate(date)}
           />
         ))}
