@@ -102,18 +102,21 @@ export default function Analytics() {
     });
     
     // Generate chart data with evenly distributed entries within each day
-    const chartData: any[] = [];
+    const chartData = [];
     
-    allDays.forEach((day) => {
+    // Process each day in the interval
+    allDays.forEach((day, dayIndex) => {
       const dateKey = format(day, "yyyy-MM-dd");
       const displayDate = format(day, dateFormat, { locale: thaiLocale });
       const dayEntries = entriesByDay.get(dateKey) || [];
       
       if (dayEntries.length > 0) {
         // If there are entries for this day, distribute them evenly
-        dayEntries.forEach((entry, index) => {
+        dayEntries.forEach((entry, entryIndex) => {
           const moodValue = moodToValue(entry.mood);
-          const entryPosition = index / Math.max(dayEntries.length - 1, 1); // Position within day (0 to 1)
+          // Create a position within the day based on the entry index
+          const entryPosition = dayEntries.length > 1 ? 
+            entryIndex / (dayEntries.length - 1) : 0.5;
           
           chartData.push({
             date: displayDate,
@@ -122,20 +125,22 @@ export default function Analytics() {
             color: getMoodColor(moodValue),
             entryText: entry.text,
             entryTime: entry.time,
-            // Custom x-axis positioning within the day's width
-            // Use the day index plus a fraction based on the entry's position
-            xPosition: allDays.indexOf(day) + entryPosition,
-            actualEntry: true
+            // Each day gets a unique x position (dayIndex), and entries are spaced within that day
+            xPosition: dayIndex + entryPosition,
+            actualEntry: true,
+            // Ensure each point has a unique key
+            key: `${dayIndex}-${entryIndex}`
           });
         });
       } else {
-        // For days without entries, add a placeholder
+        // For days without entries, add a placeholder for the x-axis
         chartData.push({
           date: displayDate,
           fullDate: day,
           value: null,
-          xPosition: allDays.indexOf(day),
-          actualEntry: false
+          xPosition: dayIndex,
+          actualEntry: false,
+          key: `empty-${dayIndex}`
         });
       }
     });
@@ -212,9 +217,7 @@ export default function Analytics() {
               tickLine={false}
               padding={{ left: 10, right: 10 }}
               interval={timeRange === "year" ? 0 : timeRange === "month" ? Math.floor(chartData.length / 10) : 0}
-              type="category"
               scale="point"
-              allowDuplicatedCategory={true}
             />
             <YAxis 
               domain={[0, 5]} 
@@ -234,13 +237,13 @@ export default function Analytics() {
                   <circle 
                     cx={props.cx} 
                     cy={props.cy} 
-                    r={3}
+                    r={4}
                     fill="var(--color-mood)"
                     stroke="none"
                   />
                 );
               }}
-              activeDot={{ r: 5, fill: "#7E69AB" }}
+              activeDot={{ r: 6, fill: "#7E69AB" }}
               connectNulls={true}
             />
           </LineChart>
