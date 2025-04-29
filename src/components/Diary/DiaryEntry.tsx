@@ -8,8 +8,14 @@ import MoodSelector from './MoodSelector';
 import { DiaryEntry, MoodType } from '@/types';
 import { formatDate } from '@/utils/dateUtils';
 import { saveEntry, getEntriesByDate, deleteEntry } from '@/utils/storageUtils';
-import { Clock } from 'lucide-react';
+import { Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface DiaryEntryFormProps {
   selectedDate: Date;
@@ -169,48 +175,65 @@ const DiaryEntryForm: React.FC<DiaryEntryFormProps> = ({
       {entries.length > 0 && (
         <div className="mb-6">
           <h3 className="font-medium text-lg mb-3">บันทึกในวันนี้</h3>
-          <div className="space-y-3">
-            {entries.map((entry) => (
-              <div 
+          <Accordion type="single" collapsible className="space-y-3">
+            {entries.map((entry, index) => (
+              <AccordionItem 
                 key={entry.id}
-                className="flex items-center justify-between border rounded-lg p-3"
+                value={entry.id}
+                className="border rounded-lg p-3"
               >
-                <div className="flex items-center">
-                  <div className="mr-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getMoodColor(entry.mood)}`}>
-                      {getMoodEmoji(entry.mood)}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="mr-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getMoodColor(entry.mood)}`}>
+                        {getMoodEmoji(entry.mood)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Clock size={14} className="mr-1" />
+                        <span>{entry.time}</span>
+                      </div>
+                      {entry.text && (
+                        <AccordionTrigger className="py-0 hover:no-underline">
+                          <div className="text-sm truncate max-w-xs text-left">
+                            {entry.text.length > 50 
+                              ? `${entry.text.substring(0, 50)}...` 
+                              : entry.text}
+                          </div>
+                        </AccordionTrigger>
+                      )}
                     </div>
                   </div>
-                  <div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Clock size={14} className="mr-1" />
-                      <span>{entry.time}</span>
-                    </div>
-                    <div className="text-sm truncate max-w-xs">
-                      {entry.text.length > 50 ? `${entry.text.substring(0, 50)}...` : entry.text}
-                    </div>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleEditEntry(entry)}
+                    >
+                      แก้ไข
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(entry.id);
+                      }}
+                      className="text-destructive hover:bg-destructive/10"
+                    >
+                      ลบ
+                    </Button>
                   </div>
                 </div>
-                <div className="flex space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleEditEntry(entry)}
-                  >
-                    แก้ไข
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleDelete(entry.id)}
-                    className="text-destructive hover:bg-destructive/10"
-                  >
-                    ลบ
-                  </Button>
-                </div>
-              </div>
+                {entry.text && (
+                  <AccordionContent className="pt-2 text-sm">
+                    {entry.text}
+                  </AccordionContent>
+                )}
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
           <div className="mt-4">
             <Button 
               variant="outline" 
