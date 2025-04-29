@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DiaryEntry, MoodType } from '@/types';
 import { isSameMonth } from '@/utils/dateUtils';
@@ -7,12 +6,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger 
 } from "@/components/ui/collapsible";
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from "@/components/ui/accordion";
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Separator } from "@/components/ui/separator";
 
@@ -135,16 +128,9 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
                     <div className={`w-2 h-2 rounded-full ${getMoodColor(entry.mood)}`}></div>
                   </div>
                   {entry.text && (
-                    <Accordion type="single" collapsible className="w-full">
-                      <AccordionItem value={`entry-${index}`} className="border-none">
-                        <AccordionTrigger className="py-1 text-xs text-gray-500 hover:no-underline">
-                          แสดงเพิ่มเติม
-                        </AccordionTrigger>
-                        <AccordionContent className="text-sm px-2 max-h-48 overflow-y-auto">
-                          {entry.text}
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
+                    <div className="text-sm mt-1 px-2 max-h-48 overflow-y-auto">
+                      {entry.text}
+                    </div>
                   )}
                   {index < entries.length - 1 && <Separator className="my-2" />}
                 </div>
