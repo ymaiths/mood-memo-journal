@@ -10,18 +10,20 @@ import { Calendar } from "@/components/ui/calendar";
 import { DiaryEntry, MoodType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addMonths, subMonths, startOfMonth, endOfMonth, isSameDay } from "date-fns";
+import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addMonths, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 
 type TimeRange = "week" | "month";
 
 interface ChartDataPoint {
-  date: string;
-  fullDate: Date;
-  value: number;
-  color: string;
-  note: string;
-  dayPosition: number; // Position within the day (0-1)
+  date: string;     // Formatted date for display
+  fullDate: Date;   // Full date object
+  value: number;    // Mood value
+  color: string;    // Color based on mood
+  note: string;     // Entry text
+  key: string;      // Unique identifier for the data point
+  dayIndex: number; // Index to identify which day this belongs to
+  position: number; // Position within the day (0-1)
 }
 
 // Helper to convert mood type to number value
@@ -119,7 +121,7 @@ export default function Analytics() {
       return entryDate >= dateRange.start && entryDate <= dateRange.end;
     });
     
-    // Group entries by date to calculate positions within each day
+    // Group entries by date string to calculate positions within each day
     const entriesByDay: Record<string, DiaryEntry[]> = {};
     
     filtered.forEach((entry: DiaryEntry) => {
@@ -130,44 +132,61 @@ export default function Analytics() {
       entriesByDay[dateKey].push(entry);
     });
     
-    // Create chart data points with positions
+    // Create a date index map to ensure consistent day spacing
+    const dateIndexMap: Record<string, number> = {};
+    
+    // Sort all distinct dates to ensure they're in chronological order
+    const allDates = Object.keys(entriesByDay).sort((a, b) => 
+      new Date(a).getTime() - new Date(b).getTime()
+    );
+    
+    // Assign each date an index
+    allDates.forEach((date, index) => {
+      dateIndexMap[date] = index;
+    });
+    
+    // Create chart data points with proper positioning
     const chartData: ChartDataPoint[] = [];
     
     Object.entries(entriesByDay).forEach(([dateKey, dayEntries]) => {
-      // Sort entries by time
+      // Sort entries by time for this day
       dayEntries.sort((a, b) => a.time.localeCompare(b.time));
       
-      // Calculate position within day for each entry
-      dayEntries.forEach((entry, index) => {
+      // Get this date's index for x-axis positioning
+      const dayIndex = dateIndexMap[dateKey];
+      
+      // Add each entry for this day
+      dayEntries.forEach((entry, entryIndex) => {
         const entryDate = new Date(entry.date);
         const thaiDateFormat = entryDate.toLocaleDateString('th-TH', {
           day: 'numeric',
           month: 'short',
         });
         
-        // Position is calculated as a fraction of the day based on entry index
-        const dayPosition = dayEntries.length > 1 
-          ? index / (dayEntries.length - 1)
-          : 0.5; // If only one entry, center it
-          
+        // Calculate position within the day (0 to 1)
+        const position = dayEntries.length === 1 ? 
+          0.5 : // Center if only one entry
+          entryIndex / (dayEntries.length - 1); // Distribute evenly if multiple entries
+        
         chartData.push({
           date: thaiDateFormat,
           fullDate: entryDate,
           value: moodToValue(entry.mood),
           color: getMoodColor(moodToValue(entry.mood)),
           note: entry.text,
-          dayPosition: dayPosition
+          key: `${dateKey}-${entry.time}-${entryIndex}`,
+          dayIndex: dayIndex,
+          position: position
         });
       });
     });
     
-    // Sort by date for proper display
-    return chartData.sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime());
+    return chartData;
   };
 
   const chartData = getFilteredData();
   
-  // Custom dot component to handle the position within each day
+  // Custom dot component to show mood colors
   const CustomDot = (props: any) => {
     const { cx, cy, payload, fill } = props;
     return (
@@ -189,6 +208,9 @@ export default function Analytics() {
         <Card className="p-3 bg-white shadow-lg">
           <p className="text-sm font-medium">{label}</p>
           <p className="text-sm text-muted-foreground">{getMoodLabel(value)}</p>
+          {payload[0].payload.note && (
+            <p className="text-xs mt-1 max-w-60 truncate">{payload[0].payload.note}</p>
+          )}
         </Card>
       );
     }
