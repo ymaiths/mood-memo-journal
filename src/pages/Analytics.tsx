@@ -83,62 +83,64 @@ export default function Analytics() {
     // Generate all days in the interval to ensure uniform X-axis
     const allDays = eachDayOfInterval(interval);
     
-    // Create a map to hold mood values for each day
-    const dailyMoodMap = new Map();
+    // Create a map to organize entries by day
+    const entriesByDay = new Map<string, DiaryEntry[]>();
     
-    // Process entries and organize by day
+    // Group entries by day
     entries.forEach((entry: DiaryEntry) => {
       const entryDate = new Date(entry.date);
       
       if (isWithinInterval(entryDate, interval)) {
         const dateKey = format(entryDate, "yyyy-MM-dd");
         
-        if (!dailyMoodMap.has(dateKey)) {
-          dailyMoodMap.set(dateKey, {
-            count: 0,
-            total: 0,
-            entries: []
-          });
+        if (!entriesByDay.has(dateKey)) {
+          entriesByDay.set(dateKey, []);
         }
         
-        const dayData = dailyMoodMap.get(dateKey);
-        const moodValue = moodToValue(entry.mood);
-        
-        dayData.count++;
-        dayData.total += moodValue;
-        dayData.entries.push({
-          time: entry.time,
-          mood: entry.mood,
-          text: entry.text
+        entriesByDay.get(dateKey)?.push(entry);
+      }
+    });
+    
+    // Generate chart data with evenly distributed entries within each day
+    const chartData: any[] = [];
+    
+    allDays.forEach((day) => {
+      const dateKey = format(day, "yyyy-MM-dd");
+      const displayDate = format(day, dateFormat, { locale: thaiLocale });
+      const dayEntries = entriesByDay.get(dateKey) || [];
+      
+      if (dayEntries.length > 0) {
+        // If there are entries for this day, distribute them evenly
+        dayEntries.forEach((entry, index) => {
+          const moodValue = moodToValue(entry.mood);
+          const entryPosition = index / Math.max(dayEntries.length - 1, 1); // Position within day (0 to 1)
+          
+          chartData.push({
+            date: displayDate,
+            fullDate: new Date(entry.date),
+            value: moodValue,
+            color: getMoodColor(moodValue),
+            entryText: entry.text,
+            entryTime: entry.time,
+            // Custom x-axis positioning within the day's width
+            // Use the day index plus a fraction based on the entry's position
+            xPosition: allDays.indexOf(day) + entryPosition,
+            actualEntry: true
+          });
+        });
+      } else {
+        // For days without entries, add a placeholder
+        chartData.push({
+          date: displayDate,
+          fullDate: day,
+          value: null,
+          xPosition: allDays.indexOf(day),
+          actualEntry: false
         });
       }
     });
     
-    // Map all days to chart data, with or without entries
-    return allDays.map(day => {
-      const dateKey = format(day, "yyyy-MM-dd");
-      const displayDate = format(day, dateFormat, { locale: thaiLocale });
-      const dayData = dailyMoodMap.get(dateKey);
-      
-      if (dayData) {
-        const avgMoodValue = dayData.total / dayData.count;
-        return {
-          date: displayDate,
-          fullDate: day,
-          value: Number(avgMoodValue.toFixed(1)),
-          color: getMoodColor(Math.round(avgMoodValue)),
-          entries: dayData.entries
-        };
-      } else {
-        // Return a placeholder for days without entries
-        return {
-          date: displayDate,
-          fullDate: day,
-          value: null,
-          entries: []
-        };
-      }
-    });
+    return chartData;
   };
 
   // Temporary Thai locale for date formatting
@@ -170,12 +172,15 @@ export default function Analytics() {
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length && payload[0].payload.value !== null) {
-      const value = payload[0].value;
+    if (active && payload && payload.length && payload[0].payload.actualEntry) {
+      const data = payload[0].payload;
       return (
         <Card className="p-3 bg-white shadow-lg">
-          <p className="text-sm font-medium">{label}</p>
-          <p className="text-sm text-muted-foreground">{getMoodLabel(Math.round(value))}</p>
+          <p className="text-sm font-medium">{label} {data.entryTime || ""}</p>
+          <p className="text-sm text-muted-foreground">{getMoodLabel(data.value)}</p>
+          {data.entryText && (
+            <p className="text-xs mt-1 max-w-[200px] break-words">{data.entryText}</p>
+          )}
         </Card>
       );
     }
@@ -200,13 +205,16 @@ export default function Analytics() {
 
       <Card className="p-6">
         <ChartContainer config={chartConfig} className="h-[400px]">
-          <LineChart data={chartData}>
+          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
             <XAxis 
               dataKey="date" 
               axisLine={false}
               tickLine={false}
               padding={{ left: 10, right: 10 }}
               interval={timeRange === "year" ? 0 : timeRange === "month" ? Math.floor(chartData.length / 10) : 0}
+              type="category"
+              scale="point"
+              allowDuplicatedCategory={true}
             />
             <YAxis 
               domain={[0, 5]} 
@@ -220,7 +228,18 @@ export default function Analytics() {
               dataKey="value"
               stroke="var(--color-mood)"
               strokeWidth={2}
-              dot={{ r: 3, fill: "var(--color-mood)" }}
+              dot={(props) => {
+                if (!props.payload.actualEntry) return null;
+                return (
+                  <circle 
+                    cx={props.cx} 
+                    cy={props.cy} 
+                    r={3}
+                    fill="var(--color-mood)"
+                    stroke="none"
+                  />
+                );
+              }}
               activeDot={{ r: 5, fill: "#7E69AB" }}
               connectNulls={true}
             />
