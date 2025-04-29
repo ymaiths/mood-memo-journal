@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,20 +10,35 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const getUser = async () => {
+    // Set up auth state listener FIRST to avoid missing auth events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user || null);
+        setLoading(false);
+      }
+    );
+
+    // THEN check for existing session
+    const checkUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user || null);
       } catch (error) {
         console.warn("Error checking authentication status:", error);
       } finally {
         setLoading(false);
       }
     };
-    getUser();
+    
+    checkUser();
+
+    // Clean up subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) {

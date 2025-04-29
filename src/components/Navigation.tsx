@@ -1,26 +1,34 @@
+
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 export function Navigation() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user || null);
+      }
+    );
+
+    // Check for existing session
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
     };
+    
     getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
-
+    // Clean up subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
@@ -38,7 +46,7 @@ export function Navigation() {
 
   if (!user) {
     return (
-      <nav className="flex justify-center mb-6 border-b">
+      <nav className="flex justify-center py-4 mb-6 border-b">
         <div className="flex items-center space-x-4">
           <Button onClick={() => navigate("/auth")}>เข้าสู่ระบบ</Button>
         </div>
@@ -47,7 +55,7 @@ export function Navigation() {
   }
 
   return (
-    <nav className="flex justify-between items-center mb-6 border-b px-4">
+    <nav className="flex justify-between items-center py-4 mb-6 border-b px-4">
       <div className="flex space-x-8">
         <Link
           to="/"
@@ -70,9 +78,14 @@ export function Navigation() {
           สถิติอารมณ์
         </Link>
       </div>
-      <Button variant="outline" onClick={handleLogout}>
-        ออกจากระบบ
-      </Button>
+      <div className="flex items-center space-x-2">
+        <span className="text-sm text-muted-foreground">
+          {user.email}
+        </span>
+        <Button variant="outline" onClick={handleLogout}>
+          ออกจากระบบ
+        </Button>
+      </div>
     </nav>
   );
-}
+};
