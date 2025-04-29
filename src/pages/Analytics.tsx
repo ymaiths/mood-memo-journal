@@ -251,8 +251,6 @@ export default function Analytics() {
               tickLine={true}
               axisLine={true}
               padding={{ left: 10, right: 10 }}
-              // Custom X position calculation to ensure equal day width
-              xAxisId="day"
             />
             <YAxis 
               domain={[0, 5]} 
