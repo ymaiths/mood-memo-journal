@@ -1,7 +1,12 @@
-
 import React, { useState } from 'react';
 import { DiaryEntry, MoodType } from '@/types';
 import { isSameMonth } from '@/utils/dateUtils';
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger 
+} from "@/components/ui/collapsible";
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Separator } from "@/components/ui/separator";
 
 interface CalendarDayProps {
@@ -21,6 +26,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
 }) => {
   const day = date.getDate();
   const isCurrentMonth = isSameMonth(date, currentMonth);
+  const [isOpen, setIsOpen] = useState(false);
   
   const getMoodColor = (mood?: MoodType) => {
     if (!mood) return '';
@@ -63,7 +69,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   };
   
   return (
-    <div className="calendar-day relative">
+    <div className={`calendar-day relative ${isOpen ? 'z-10' : ''}`}>
       <button
         onClick={handleDayClick}
         className={`
@@ -104,25 +110,34 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
       </button>
       
       {hasEntries && (
-        <div className="absolute left-0 w-72 mt-1 shadow-lg rounded-md border bg-white z-20">
-          <div className="p-2">
-            <h4 className="font-medium text-sm mb-2">บันทึกในวันนี้</h4>
-            {entries.map((entry, index) => (
-              <div key={index} className="mb-2">
-                <div className={`flex items-center gap-2 px-2 py-1 rounded-sm ${getMoodColor(entry.mood)} bg-opacity-20`}>
-                  <span className="text-xs font-medium">{entry.time}</span>
-                  <div className={`w-2 h-2 rounded-full ${getMoodColor(entry.mood)}`}></div>
-                </div>
-                {entry.text && (
-                  <div className="text-sm mt-1 px-2 max-h-48 overflow-y-auto">
-                    {entry.text}
+        <Collapsible 
+          className="absolute left-0 w-72 mt-1 shadow-lg rounded-md border bg-white z-20"
+          open={isOpen}
+          onOpenChange={setIsOpen}
+        >
+          <CollapsibleTrigger className="absolute -top-4 right-0 bg-gray-100 p-1 rounded-full text-xs z-20">
+            {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="p-2">
+              <h4 className="font-medium text-sm mb-2">บันทึกในวันนี้</h4>
+              {entries.map((entry, index) => (
+                <div key={index} className="mb-2">
+                  <div className={`flex items-center gap-2 px-2 py-1 rounded-sm ${getMoodColor(entry.mood)} bg-opacity-20`}>
+                    <span className="text-xs font-medium">{entry.time}</span>
+                    <div className={`w-2 h-2 rounded-full ${getMoodColor(entry.mood)}`}></div>
                   </div>
-                )}
-                {index < entries.length - 1 && <Separator className="my-2" />}
-              </div>
-            ))}
-          </div>
-        </div>
+                  {entry.text && (
+                    <div className="text-sm mt-1 px-2 max-h-48 overflow-y-auto">
+                      {entry.text}
+                    </div>
+                  )}
+                  {index < entries.length - 1 && <Separator className="my-2" />}
+                </div>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );
