@@ -20,10 +20,7 @@ const QuickMemo: React.FC = () => {
   };
   
   const handleSave = () => {
-    if (!content.trim()) {
-      toast.error('กรุณาใส่เนื้อหาบันทึก');
-      return;
-    }
+    // Removed content validation check to make it optional
     
     const now = new Date();
     const dateString = now.toISOString().split('T')[0];
@@ -34,7 +31,7 @@ const QuickMemo: React.FC = () => {
       date: dateString,
       time: timeString,
       mood: mood,
-      text: content,
+      text: content, // Can be empty now
       updatedAt: now.toISOString(),
     };
     
@@ -56,11 +53,11 @@ const QuickMemo: React.FC = () => {
           
           <div className="mb-6">
             <label htmlFor="content" className="block text-sm font-medium mb-2">
-              เนื้อหาบันทึก
+              เนื้อหาบันทึก (ไม่จำเป็น)
             </label>
             <Textarea
               id="content"
-              placeholder="เขียนสิ่งที่คุณอยากบันทึก..."
+              placeholder="เขียนสิ่งที่คุณอยากบันทึก (ไม่จำเป็น)..."
               className="min-h-[200px] w-full"
               value={content}
               onChange={handleContentChange}
