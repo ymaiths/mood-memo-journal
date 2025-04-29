@@ -1,4 +1,3 @@
-
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,14 +12,12 @@ export function Navigation() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user || null);
       }
     );
 
-    // Check for existing session
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
@@ -28,7 +25,6 @@ export function Navigation() {
     
     getUser();
 
-    // Clean up subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
@@ -58,11 +54,21 @@ export function Navigation() {
     <nav className="flex justify-between items-center py-4 mb-6 border-b px-4">
       <div className="flex space-x-8">
         <Link
-          to="/"
+          to="/quick-memo"
           className={cn(
             "px-4 py-2 -mb-px text-sm font-medium transition-colors",
             "hover:text-primary",
-            location.pathname === "/" && "border-b-2 border-primary text-primary"
+            location.pathname === "/quick-memo" && "border-b-2 border-primary text-primary"
+          )}
+        >
+          บันทึกเร็ว
+        </Link>
+        <Link
+          to="/calendar"
+          className={cn(
+            "px-4 py-2 -mb-px text-sm font-medium transition-colors",
+            "hover:text-primary",
+            location.pathname === "/calendar" && "border-b-2 border-primary text-primary"
           )}
         >
           ปฏิทิน
