@@ -2,11 +2,16 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { DiaryEntry } from '@/types';
+import { getAllEntries, saveEntry, deleteEntry } from '@/utils/storageUtils';
 
 export const useRealtimeDiaryEntries = () => {
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
 
   useEffect(() => {
+    // Initial load from local storage
+    const storedEntries = getAllEntries();
+    setEntries(storedEntries);
+    
     // Create a channel for real-time updates
     const channel = supabase
       .channel('diary_entries')
@@ -29,7 +34,7 @@ export const useRealtimeDiaryEntries = () => {
               // Update existing entry
               setEntries(currentEntries => 
                 currentEntries.map(entry => 
-                  entry.date === (payload.new as DiaryEntry).date 
+                  entry.id === (payload.new as DiaryEntry).id 
                     ? payload.new as DiaryEntry 
                     : entry
                 )
@@ -39,7 +44,7 @@ export const useRealtimeDiaryEntries = () => {
               // Remove deleted entry
               setEntries(currentEntries => 
                 currentEntries.filter(entry => 
-                  entry.date !== (payload.old as DiaryEntry).date
+                  entry.id !== (payload.old as DiaryEntry).id
                 )
               );
               break;
