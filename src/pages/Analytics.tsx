@@ -1,13 +1,19 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getAllEntries } from "@/utils/storageUtils";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { DiaryEntry, MoodType } from "@/types";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addMonths, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 
-type TimeRange = "week" | "month" | "year";
+type TimeRange = "week" | "month";
 
 // Helper to convert mood type to number value
 const moodToValue = (mood: MoodType): number => {
@@ -47,27 +53,60 @@ const getMoodLabel = (value: number): string => {
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState<TimeRange>("month");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [dateRange, setDateRange] = useState<{start: Date, end: Date}>({
+    start: startOfMonth(new Date()),
+    end: endOfMonth(new Date()),
+  });
   
+  // Update date range when selected date or time range changes
+  useEffect(() => {
+    if (timeRange === "week") {
+      setDateRange({
+        start: startOfWeek(selectedDate, { weekStartsOn: 0 }),
+        end: endOfWeek(selectedDate, { weekStartsOn: 0 }),
+      });
+    } else {
+      setDateRange({
+        start: startOfMonth(selectedDate),
+        end: endOfMonth(selectedDate),
+      });
+    }
+  }, [selectedDate, timeRange]);
+
   const { data: entries = [] } = useQuery({
     queryKey: ["mood-entries"],
     queryFn: getAllEntries,
   });
 
+  const handlePrevious = () => {
+    if (timeRange === "week") {
+      setSelectedDate(subWeeks(selectedDate, 1));
+    } else {
+      setSelectedDate(subMonths(selectedDate, 1));
+    }
+  };
+
+  const handleNext = () => {
+    if (timeRange === "week") {
+      setSelectedDate(addWeeks(selectedDate, 1));
+    } else {
+      setSelectedDate(addMonths(selectedDate, 1));
+    }
+  };
+
+  const formatTimeRangeDisplay = (): string => {
+    if (timeRange === "week") {
+      return `${format(dateRange.start, "d MMM")} - ${format(dateRange.end, "d MMM yyyy")}`;
+    } else {
+      return format(selectedDate, "MMMM yyyy");
+    }
+  };
+
   const getFilteredData = () => {
-    const now = new Date();
     const filtered = entries.filter((entry: DiaryEntry) => {
       const entryDate = new Date(entry.date);
-      if (timeRange === "week") {
-        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        return entryDate >= weekAgo;
-      } else if (timeRange === "month") {
-        return (
-          entryDate.getMonth() === now.getMonth() &&
-          entryDate.getFullYear() === now.getFullYear()
-        );
-      } else {
-        return entryDate.getFullYear() === now.getFullYear();
-      }
+      return entryDate >= dateRange.start && entryDate <= dateRange.end;
     });
 
     return filtered.map((entry: DiaryEntry) => ({
@@ -98,18 +137,47 @@ export default function Analytics() {
 
   return (
     <div className="container mx-auto px-4">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h1 className="text-2xl font-semibold">สถิติอารมณ์</h1>
-        <Select value={timeRange} onValueChange={(value: TimeRange) => setTimeRange(value)}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="เลือกช่วงเวลา" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="week">สัปดาห์</SelectItem>
-            <SelectItem value="month">เดือน</SelectItem>
-            <SelectItem value="year">ปี</SelectItem>
-          </SelectContent>
-        </Select>
+        
+        <div className="flex items-center space-x-4 w-full md:w-auto">
+          <Select value={timeRange} onValueChange={(value: TimeRange) => setTimeRange(value)}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="เลือกช่วงเวลา" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">สัปดาห์</SelectItem>
+              <SelectItem value="month">เดือน</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <div className="flex items-center border rounded-md px-2 py-1 gap-2 bg-background">
+            <Button variant="ghost" size="icon" onClick={handlePrevious}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-1">
+                  <CalendarIcon className="h-4 w-4" />
+                  <span>{formatTimeRangeDisplay()}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            
+            <Button variant="ghost" size="icon" onClick={handleNext}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
 
       <Card className="p-6">
