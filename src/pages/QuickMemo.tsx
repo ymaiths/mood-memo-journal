@@ -2,15 +2,16 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MoodSelector } from '@/components/Diary/MoodSelector';
+import MoodSelector from '@/components/Diary/MoodSelector'; // Fixed: import as default export
 import { saveEntry } from '@/utils/storageUtils';
 import { toast } from 'sonner';
+import { MoodType } from '@/types';
 
 const QuickMemo = () => {
   const [content, setContent] = useState('');
-  const [mood, setMood] = useState(3); // Default to neutral mood
+  const [mood, setMood] = useState<MoodType>(MoodType.NEUTRAL); // Use MoodType enum instead of number
   
-  const handleMoodChange = (newMood: number) => {
+  const handleMoodChange = (newMood: MoodType) => {
     setMood(newMood);
   };
   
@@ -25,11 +26,13 @@ const QuickMemo = () => {
     }
     
     const today = new Date();
+    const dateString = today.toISOString().split('T')[0];
+    
     const entry = {
-      id: `${today.toISOString().split('T')[0]}`,
-      date: today,
+      date: dateString,
       mood: mood,
-      content: content,
+      text: content,
+      updatedAt: today.toISOString(),
     };
     
     saveEntry(entry);
@@ -45,7 +48,7 @@ const QuickMemo = () => {
           
           <div className="mb-6">
             <h2 className="text-lg font-medium mb-2">อารมณ์ของคุณวันนี้</h2>
-            <MoodSelector selectedMood={mood} onSelectMood={handleMoodChange} />
+            <MoodSelector selectedMood={mood} onChange={handleMoodChange} />
           </div>
           
           <div className="mb-6">
