@@ -7,7 +7,7 @@ import { saveEntry } from '@/utils/storageUtils';
 import { toast } from 'sonner';
 import { MoodType } from '@/types';
 
-const QuickMemo = () => {
+const QuickMemo: React.FC = () => {
   const [content, setContent] = useState('');
   const [mood, setMood] = useState<MoodType>(MoodType.NEUTRAL);
   

@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +13,7 @@ import QuickMemo from "./pages/QuickMemo";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
+// Creating the query client outside of the component ensures it's only created once
 const queryClient = new QueryClient();
 
 const App = () => (
