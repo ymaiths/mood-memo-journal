@@ -10,10 +10,19 @@ import { Calendar } from "@/components/ui/calendar";
 import { DiaryEntry, MoodType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addMonths, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addMonths, subMonths, startOfMonth, endOfMonth, isSameDay } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 
 type TimeRange = "week" | "month";
+
+interface ChartDataPoint {
+  date: string;
+  fullDate: Date;
+  value: number;
+  color: string;
+  note: string;
+  dayPosition: number; // Position within the day (0-1)
+}
 
 // Helper to convert mood type to number value
 const moodToValue = (mood: MoodType): number => {
@@ -104,23 +113,74 @@ export default function Analytics() {
   };
 
   const getFilteredData = () => {
+    // First filter entries within the date range
     const filtered = entries.filter((entry: DiaryEntry) => {
       const entryDate = new Date(entry.date);
       return entryDate >= dateRange.start && entryDate <= dateRange.end;
     });
-
-    return filtered.map((entry: DiaryEntry) => ({
-      date: new Date(entry.date).toLocaleDateString('th-TH', {
-        day: 'numeric',
-        month: 'short',
-      }),
-      value: moodToValue(entry.mood),
-      color: getMoodColor(moodToValue(entry.mood)),
-      note: entry.text,
-    }));
+    
+    // Group entries by date to calculate positions within each day
+    const entriesByDay: Record<string, DiaryEntry[]> = {};
+    
+    filtered.forEach((entry: DiaryEntry) => {
+      const dateKey = entry.date;
+      if (!entriesByDay[dateKey]) {
+        entriesByDay[dateKey] = [];
+      }
+      entriesByDay[dateKey].push(entry);
+    });
+    
+    // Create chart data points with positions
+    const chartData: ChartDataPoint[] = [];
+    
+    Object.entries(entriesByDay).forEach(([dateKey, dayEntries]) => {
+      // Sort entries by time
+      dayEntries.sort((a, b) => a.time.localeCompare(b.time));
+      
+      // Calculate position within day for each entry
+      dayEntries.forEach((entry, index) => {
+        const entryDate = new Date(entry.date);
+        const thaiDateFormat = entryDate.toLocaleDateString('th-TH', {
+          day: 'numeric',
+          month: 'short',
+        });
+        
+        // Position is calculated as a fraction of the day based on entry index
+        const dayPosition = dayEntries.length > 1 
+          ? index / (dayEntries.length - 1)
+          : 0.5; // If only one entry, center it
+          
+        chartData.push({
+          date: thaiDateFormat,
+          fullDate: entryDate,
+          value: moodToValue(entry.mood),
+          color: getMoodColor(moodToValue(entry.mood)),
+          note: entry.text,
+          dayPosition: dayPosition
+        });
+      });
+    });
+    
+    // Sort by date for proper display
+    return chartData.sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime());
   };
 
   const chartData = getFilteredData();
+  
+  // Custom dot component to handle the position within each day
+  const CustomDot = (props: any) => {
+    const { cx, cy, payload, fill } = props;
+    return (
+      <circle 
+        cx={cx} 
+        cy={cy} 
+        r={4} 
+        fill={payload.color} 
+        stroke="#9b87f5" 
+        strokeWidth={2}
+      />
+    );
+  };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -182,17 +242,31 @@ export default function Analytics() {
 
       <Card className="p-6">
         <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={chartData}>
-            <XAxis dataKey="date" />
-            <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
+          <LineChart 
+            data={chartData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+          >
+            <XAxis 
+              dataKey="date"
+              tickLine={true}
+              axisLine={true}
+              padding={{ left: 10, right: 10 }}
+              // Custom X position calculation to ensure equal day width
+              xAxisId="day"
+            />
+            <YAxis 
+              domain={[0, 5]} 
+              ticks={[1, 2, 3, 4, 5]} 
+            />
             <Tooltip content={<CustomTooltip />} />
             <Line
               type="monotone"
               dataKey="value"
               stroke="#9b87f5"
               strokeWidth={2}
-              dot={{ fill: "#9b87f5", r: 4 }}
+              dot={<CustomDot />}
               activeDot={{ r: 6, fill: "#7E69AB" }}
+              isAnimationActive={true}
             />
           </LineChart>
         </ResponsiveContainer>
