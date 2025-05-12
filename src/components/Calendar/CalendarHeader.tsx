@@ -60,7 +60,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="เดือน" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="item-aligned" align="start" side="top">
             {Array.from({ length: 12 }, (_, i) => (
               <SelectItem key={i} value={i.toString()}>
                 {getThaiMonth(i)}
@@ -76,7 +76,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           <SelectTrigger className="w-[100px]">
             <SelectValue placeholder="ปี" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="item-aligned" align="start" side="top">
             {years.map((year) => (
               <SelectItem key={year} value={year.toString()}>
                 {year}
