@@ -1,29 +1,61 @@
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getAllEntries } from "@/utils/storageUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { DiaryEntry, MoodType } from "@/types";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, addMonths, subMonths, startOfMonth, endOfMonth } from "date-fns";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import {
+  format,
+  addWeeks,
+  subWeeks,
+  startOfWeek,
+  endOfWeek,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+} from "lucide-react";
 
 type TimeRange = "week" | "month";
 
 interface ChartDataPoint {
-  date: string;     // Formatted date for display
-  fullDate: Date;   // Full date object
-  value: number;    // Mood value
-  color: string;    // Color based on mood
-  note: string;     // Entry text
-  key: string;      // Unique identifier for the data point
+  date: string; // Formatted date for display
+  fullDate: Date; // Full date object
+  value: number; // Mood value
+  color: string; // Color based on mood
+  note: string; // Entry text
+  key: string; // Unique identifier for the data point
   dayIndex: number; // Index to identify which day this belongs to
   position: number; // Position within the day (0-1)
+  xValue: number;
 }
 
 // Helper to convert mood type to number value
@@ -65,11 +97,11 @@ const getMoodLabel = (value: number): string => {
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState<TimeRange>("month");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [dateRange, setDateRange] = useState<{start: Date, end: Date}>({
+  const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>({
     start: startOfMonth(new Date()),
     end: endOfMonth(new Date()),
   });
-  
+
   // Update date range when selected date or time range changes
   useEffect(() => {
     if (timeRange === "week") {
@@ -108,7 +140,10 @@ export default function Analytics() {
 
   const formatTimeRangeDisplay = (): string => {
     if (timeRange === "week") {
-      return `${format(dateRange.start, "d MMM")} - ${format(dateRange.end, "d MMM yyyy")}`;
+      return `${format(dateRange.start, "d MMM")} - ${format(
+        dateRange.end,
+        "d MMM yyyy"
+      )}`;
     } else {
       return format(selectedDate, "MMMM yyyy");
     }
@@ -120,10 +155,10 @@ export default function Analytics() {
       const entryDate = new Date(entry.date);
       return entryDate >= dateRange.start && entryDate <= dateRange.end;
     });
-    
+
     // Group entries by date string to calculate positions within each day
     const entriesByDay: Record<string, DiaryEntry[]> = {};
-    
+
     filtered.forEach((entry: DiaryEntry) => {
       const dateKey = entry.date;
       if (!entriesByDay[dateKey]) {
@@ -131,43 +166,44 @@ export default function Analytics() {
       }
       entriesByDay[dateKey].push(entry);
     });
-    
+
     // Create a date index map to ensure consistent day spacing
     const dateIndexMap: Record<string, number> = {};
-    
+
     // Sort all distinct dates to ensure they're in chronological order
-    const allDates = Object.keys(entriesByDay).sort((a, b) => 
-      new Date(a).getTime() - new Date(b).getTime()
+    const allDates = Object.keys(entriesByDay).sort(
+      (a, b) => new Date(a).getTime() - new Date(b).getTime()
     );
-    
+
     // Assign each date an index
     allDates.forEach((date, index) => {
       dateIndexMap[date] = index;
     });
-    
+
     // Create chart data points with proper positioning
     const chartData: ChartDataPoint[] = [];
-    
+
     Object.entries(entriesByDay).forEach(([dateKey, dayEntries]) => {
       // Sort entries by time for this day
       dayEntries.sort((a, b) => a.time.localeCompare(b.time));
-      
+
       // Get this date's index for x-axis positioning
       const dayIndex = dateIndexMap[dateKey];
-      
+
       // Add each entry for this day
       dayEntries.forEach((entry, entryIndex) => {
         const entryDate = new Date(entry.date);
-        const thaiDateFormat = entryDate.toLocaleDateString('th-TH', {
-          day: 'numeric',
-          month: 'short',
+        const thaiDateFormat = entryDate.toLocaleDateString("th-TH", {
+          day: "numeric",
+          month: "short",
         });
-        
+
         // Calculate position within the day (0 to 1)
-        const position = dayEntries.length === 1 ? 
-          0.5 : // Center if only one entry
-          entryIndex / (dayEntries.length - 1); // Distribute evenly if multiple entries
-        
+        const position =
+          dayEntries.length === 1
+            ? 0.5 // Center if only one entry
+            : entryIndex / (dayEntries.length - 1); // Distribute evenly if multiple entries
+
         chartData.push({
           date: thaiDateFormat,
           fullDate: entryDate,
@@ -176,26 +212,27 @@ export default function Analytics() {
           note: entry.text,
           key: `${dateKey}-${entry.time}-${entryIndex}`,
           dayIndex: dayIndex,
-          position: position
+          position: position,
+          xValue: dayIndex + position,
         });
       });
     });
-    
+
     return chartData;
   };
 
   const chartData = getFilteredData();
-  
+
   // Custom dot component to show mood colors
   const CustomDot = (props: any) => {
     const { cx, cy, payload, fill } = props;
     return (
-      <circle 
-        cx={cx} 
-        cy={cy} 
-        r={4} 
-        fill={payload.color} 
-        stroke="#9b87f5" 
+      <circle
+        cx={cx}
+        cy={cy}
+        r={4}
+        fill={payload.color}
+        stroke="#9b87f5"
         strokeWidth={2}
       />
     );
@@ -209,7 +246,9 @@ export default function Analytics() {
           <p className="text-sm font-medium">{label}</p>
           <p className="text-sm text-muted-foreground">{getMoodLabel(value)}</p>
           {payload[0].payload.note && (
-            <p className="text-xs mt-1 max-w-60 truncate">{payload[0].payload.note}</p>
+            <p className="text-xs mt-1 max-w-60 truncate">
+              {payload[0].payload.note}
+            </p>
           )}
         </Card>
       );
@@ -221,9 +260,12 @@ export default function Analytics() {
     <div className="container mx-auto px-4">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h1 className="text-2xl font-semibold">สถิติอารมณ์</h1>
-        
+
         <div className="flex items-center space-x-4 w-full md:w-auto">
-          <Select value={timeRange} onValueChange={(value: TimeRange) => setTimeRange(value)}>
+          <Select
+            value={timeRange}
+            onValueChange={(value: TimeRange) => setTimeRange(value)}
+          >
             <SelectTrigger className="w-32">
               <SelectValue placeholder="เลือกช่วงเวลา" />
             </SelectTrigger>
@@ -232,12 +274,12 @@ export default function Analytics() {
               <SelectItem value="month">เดือน</SelectItem>
             </SelectContent>
           </Select>
-          
+
           <div className="flex items-center border rounded-md px-2 py-1 gap-2 bg-background">
             <Button variant="ghost" size="icon" onClick={handlePrevious}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            
+
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-1">
@@ -254,7 +296,7 @@ export default function Analytics() {
                 />
               </PopoverContent>
             </Popover>
-            
+
             <Button variant="ghost" size="icon" onClick={handleNext}>
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -264,20 +306,24 @@ export default function Analytics() {
 
       <Card className="p-6">
         <ResponsiveContainer width="100%" height={400}>
-          <LineChart 
+          <LineChart
             data={chartData}
             margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
           >
-            <XAxis 
-              dataKey="date"
-              tickLine={true}
-              axisLine={true}
-              padding={{ left: 10, right: 10 }}
+            <XAxis
+              dataKey="xValue"
+              type="number"
+              domain={["dataMin", "dataMax"]}
+              tickFormatter={(x) => {
+                const point = chartData.find(
+                  (p) => Math.abs(p.xValue - x) < 0.001
+                );
+                return point?.date || "";
+              }}
+              tickLine
+              axisLine
             />
-            <YAxis 
-              domain={[0, 5]} 
-              ticks={[1, 2, 3, 4, 5]} 
-            />
+            <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} />
             <Tooltip content={<CustomTooltip />} />
             <Line
               type="monotone"
