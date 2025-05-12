@@ -12,6 +12,7 @@ import Analytics from "./pages/Analytics";
 import QuickMemo from "./pages/QuickMemo";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import StartupAnimation from "./components/StartupAnimation";
 
 // Creating the query client outside of the component ensures it's only created once
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <StartupAnimation />
       <BrowserRouter>
         <div className="min-h-screen">
           <Navigation />
