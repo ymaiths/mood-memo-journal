@@ -48,14 +48,17 @@ const StartupAnimation: React.FC = () => {
           }`}
         />
         
-        {/* Smile curve */}
-        <div className="relative w-24 h-12 overflow-hidden">
+        {/* "U" shape instead of smile curve */}
+        <div className="relative w-24 h-12">
           <div 
-            className={`absolute w-24 h-24 border-4 rounded-full border-mood-primary transition-opacity duration-300 ${
+            className={`transition-opacity duration-300 ${
               smileVisible ? 'opacity-100' : 'opacity-0'
             }`}
-            style={{ top: '-15px' }}
-          />
+          >
+            <div className="absolute -left-4 top-0 w-4 h-12 border-l-4 border-b-4 border-mood-primary rounded-bl-full"></div>
+            <div className="absolute w-16 h-4 border-b-4 border-mood-primary" style={{ left: '0px', top: '8px' }}></div>
+            <div className="absolute left-16 top-0 w-4 h-12 border-r-4 border-b-4 border-mood-primary rounded-br-full"></div>
+          </div>
         </div>
         
         {/* Branding text */}
