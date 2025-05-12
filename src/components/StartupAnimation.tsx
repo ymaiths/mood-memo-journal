@@ -1,7 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 
-const StartupAnimation: React.FC = () => {
+interface StartupAnimationProps {
+  show: boolean;
+  onComplete?: () => void;
+}
+
+const StartupAnimation: React.FC<StartupAnimationProps> = ({ show, onComplete }) => {
   const [showM1, setShowM1] = useState(false);
   const [showO1, setShowO1] = useState(false);
   const [showO2, setShowO2] = useState(false);
@@ -11,9 +16,25 @@ const StartupAnimation: React.FC = () => {
   const [showM3, setShowM3] = useState(false);
   const [showO3, setShowO3] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
-  const [showAnimation, setShowAnimation] = useState(true);
+  const [showAnimation, setShowAnimation] = useState(show);
 
   useEffect(() => {
+    setShowAnimation(show);
+    
+    if (!show) {
+      // Reset states when hidden
+      setShowM1(false);
+      setShowO1(false);
+      setShowO2(false);
+      setShowD(false);
+      setShowM2(false);
+      setShowE(false);
+      setShowM3(false);
+      setShowO3(false);
+      setShowComplete(false);
+      return;
+    }
+    
     const animationSequence = [
       { setter: setShowM1, delay: 300 },
       { setter: setShowO1, delay: 600 },
@@ -33,32 +54,21 @@ const StartupAnimation: React.FC = () => {
     // Hide animation after completion
     setTimeout(() => {
       setShowAnimation(false);
-      // Store in localStorage that we've shown the animation
-      localStorage.setItem('animationShown', 'true');
+      if (onComplete) onComplete();
     }, 3500);
-  }, []);
-
-  // Check if we've already shown the animation in this session
-  useEffect(() => {
-    const hasAnimationShown = localStorage.getItem('animationShown');
-    if (hasAnimationShown === 'true') {
-      setShowAnimation(false);
-    }
-  }, []);
+  }, [show, onComplete]);
 
   if (!showAnimation) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background z-50 flex-col">
       <div className="text-4xl md:text-6xl font-bold text-mood-primary mb-2 flex">
-        {/* First line: "Mood" */}
         <span className={`transition-opacity duration-300 ${showM1 ? 'opacity-100' : 'opacity-0'}`}>M</span>
         <span className={`transition-opacity duration-300 ${showO1 ? 'opacity-100' : 'opacity-0'}`}>o</span>
         <span className={`transition-opacity duration-300 ${showO2 ? 'opacity-100' : 'opacity-0'}`}>o</span>
         <span className={`transition-opacity duration-300 ${showD ? 'opacity-100' : 'opacity-0'}`}>d</span>
       </div>
       <div className="text-4xl md:text-6xl font-bold text-mood-primary flex">
-        {/* Second line: "Memo" */}
         <span className={`transition-opacity duration-300 ${showM2 ? 'opacity-100' : 'opacity-0'}`}>M</span>
         <span className={`transition-opacity duration-300 ${showE ? 'opacity-100' : 'opacity-0'}`}>e</span>
         <span className={`transition-opacity duration-300 ${showM3 ? 'opacity-100' : 'opacity-0'}`}>m</span>
