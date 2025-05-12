@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { DiaryEntry, MoodType } from '@/types';
 import { isSameMonth } from '@/utils/dateUtils';
@@ -29,28 +30,28 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   
   const getMoodColor = (mood?: MoodType) => {
-    if (!mood) return '';
+    if (!mood) return "";
     
     const colors: Record<MoodType, string> = {
-      [MoodType.VERY_HAPPY]: 'bg-mood-veryhappy',
-      [MoodType.HAPPY]: 'bg-mood-happy',
-      [MoodType.NEUTRAL]: 'bg-mood-neutral',
-      [MoodType.SAD]: 'bg-mood-sad',
-      [MoodType.VERY_SAD]: 'bg-mood-verysad',
+      [MoodType.VERY_HAPPY]: "bg-mood-veryhappy",
+      [MoodType.HAPPY]: "bg-mood-happy",
+      [MoodType.NEUTRAL]: "bg-mood-neutral",
+      [MoodType.SAD]: "bg-mood-sad",
+      [MoodType.VERY_SAD]: "bg-mood-verysad",
     };
     
     return colors[mood];
   };
   
   const getMoodBorderColor = (mood?: MoodType) => {
-    if (!mood) return '';
+    if (!mood) return "";
     
     const colors: Record<MoodType, string> = {
-      [MoodType.VERY_HAPPY]: 'border-mood-veryhappy',
-      [MoodType.HAPPY]: 'border-mood-happy',
-      [MoodType.NEUTRAL]: 'border-mood-neutral',
-      [MoodType.SAD]: 'border-mood-sad',
-      [MoodType.VERY_SAD]: 'border-mood-verysad',
+      [MoodType.VERY_HAPPY]: "border-mood-veryhappy",
+      [MoodType.HAPPY]: "border-mood-happy",
+      [MoodType.NEUTRAL]: "border-mood-neutral",
+      [MoodType.SAD]: "border-mood-sad",
+      [MoodType.VERY_SAD]: "border-mood-verysad",
     };
     
     return colors[mood];
@@ -61,7 +62,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   
   // Get the most recent entry's mood for the dot color
   const latestEntry = hasEntries ? entries[entries.length - 1] : null;
-  const dotColor = latestEntry ? getMoodColor(latestEntry.mood) : '';
+  const dotColor = latestEntry ? getMoodColor(latestEntry.mood) : "";
   
   const handleDayClick = (e: React.MouseEvent) => {
     onClick();
@@ -69,14 +70,14 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   };
   
   return (
-    <div className={`calendar-day relative ${isOpen ? 'z-10' : ''}`}>
+    <div className={`calendar-day relative ${isOpen ? "z-10" : ""}`}>
       <button
         onClick={handleDayClick}
         className={`
           rounded-md flex items-center justify-center w-full
-          ${isCurrentMonth ? 'text-foreground' : 'text-muted-foreground opacity-40'}
-          ${isSelected ? 'bg-mood-primary/10 ring-2 ring-mood-primary' : 'hover:bg-secondary'}
-          ${hasEntries ? 'calendar-day-has-entry' : ''}
+          ${isCurrentMonth ? "text-foreground" : "text-muted-foreground opacity-40"}
+          ${isSelected ? "bg-mood-primary/10 ring-2 ring-mood-primary" : "hover:bg-secondary"}
+          ${hasEntries ? "calendar-day-has-entry" : ""}
         `}
       >
         <div 
@@ -115,7 +116,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
           open={isOpen}
           onOpenChange={setIsOpen}
         >
-          <CollapsibleTrigger className="absolute -top-4 right-0 bg-gray-100 p-1 rounded-full text-xs z-20">
+          <CollapsibleTrigger className="absolute -top-4 left-0 bg-gray-100 p-1 rounded-full text-xs z-20">
             {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </CollapsibleTrigger>
           <CollapsibleContent>
