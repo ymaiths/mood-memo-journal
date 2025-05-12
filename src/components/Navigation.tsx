@@ -1,3 +1,4 @@
+
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ export function Navigation() {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const isAuthPage = location.pathname === "/auth";
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -41,6 +43,11 @@ export function Navigation() {
   };
 
   if (!user) {
+    // Don't show login button when already on the auth page
+    if (isAuthPage) {
+      return null;
+    }
+    
     return (
       <nav className="flex justify-center py-4 mb-6 border-b">
         <div className="flex items-center space-x-4">
