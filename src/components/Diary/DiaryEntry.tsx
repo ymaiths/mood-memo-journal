@@ -234,14 +234,6 @@ const DiaryEntryForm: React.FC<DiaryEntryFormProps> = ({
               </AccordionItem>
             ))}
           </Accordion>
-          <div className="mt-4">
-            <Button 
-              variant="outline" 
-              onClick={handleNewEntry}
-            >
-              + เพิ่มบันทึกใหม่
-            </Button>
-          </div>
           <Separator className="my-6" />
         </div>
       )}
